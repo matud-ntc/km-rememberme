@@ -17,7 +17,7 @@ App de tareas y recordatorios del hogar para 2 usuarios (Matu y Kari).
 
 **DB:** Neon — `postgresql://neondb_owner:npg_Gfe92JvhpuoC@ep-patient-morning-anyf11iz-pooler...`
 
-**Usuarios:** `user_matu` (Matu 🧔 #60a5fa), `user_kari` (Kari 👩 #f472b6)
+**Usuarios:** `user_matu` (Matu 🧑 #60a5fa), `user_kari` (Kari 👩 #f472b6) — pelo negro
 
 **Secciones:**
 1. `/supermercado` — Grid de iconos emoji por categoría, tap → modal de cantidad (1U, 1K, etc.)
