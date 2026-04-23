@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { getHomeTasks } from '@/lib/actions'
 import { HomeTaskList } from '@/components/home-task-list'
 import { UserSelector } from '@/components/user-selector'
-import { getTodayString } from '@/lib/data'
 
 export default async function HogarPage() {
   const tasks = await getHomeTasks()
@@ -15,13 +14,14 @@ export default async function HogarPage() {
   })
 
   const dailyDone = tasks.filter(
-    (t) => t.frequency === 'daily' && t.todayCompletions.length > 0,
+    (t: (typeof tasks)[number]) => t.frequency === 'daily' && t.todayCompletions.length > 0,
   ).length
-  const dailyTotal = tasks.filter((t) => t.frequency === 'daily').length
+  const dailyTotal = tasks.filter(
+    (t: (typeof tasks)[number]) => t.frequency === 'daily',
+  ).length
 
   return (
     <div className="flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-6 pb-2">
         <div>
           <h1 className="text-xl font-bold text-white">🏠 Hogar</h1>
