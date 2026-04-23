@@ -47,3 +47,18 @@ model TaskCompletion {
   completedAt DateTime @default(now())
   date        String
 }
+
+model SavedList {
+  id        String          @id @default(cuid())
+  name      String
+  items     SavedListItem[]
+  createdAt DateTime        @default(now())
+}
+
+model SavedListItem {
+  id          String    @id @default(cuid())
+  savedListId String
+  savedList   SavedList @relation(fields: [savedListId], references: [id], onDelete: Cascade)
+  itemKey     String
+  quantity    String
+}

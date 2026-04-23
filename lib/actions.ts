@@ -13,20 +13,11 @@ export async function getUsers() {
 // ─── Grocery ──────────────────────────────────────────────────────────────────
 
 export async function getGroceryItems() {
-  return prisma.groceryItem.findMany({
-    where: { done: false },
+  const items = await prisma.groceryItem.findMany({
     include: { user: true },
     orderBy: { createdAt: 'asc' },
   })
-}
-
-export async function getDoneGroceryItems() {
-  return prisma.groceryItem.findMany({
-    where: { done: true },
-    include: { user: true },
-    orderBy: { updatedAt: 'desc' },
-    take: 30,
-  })
+  return items
 }
 
 export async function addOrUpdateGroceryItem(
@@ -37,7 +28,6 @@ export async function addOrUpdateGroceryItem(
   const existing = await prisma.groceryItem.findFirst({
     where: { itemKey, done: false },
   })
-
   if (existing) {
     await prisma.groceryItem.update({
       where: { id: existing.id },
@@ -48,7 +38,6 @@ export async function addOrUpdateGroceryItem(
       data: { itemKey, quantity, userId },
     })
   }
-
   revalidatePath('/supermercado')
 }
 
@@ -67,9 +56,83 @@ export async function toggleGroceryDone(id: string) {
   revalidatePath('/supermercado')
 }
 
-export async function clearGroceryList() {
+export async function clearDoneGroceryItems() {
   await prisma.groceryItem.deleteMany({ where: { done: true } })
   revalidatePath('/supermercado')
+}
+
+export async function clearActiveGroceryList() {
+  await prisma.groceryItem.deleteMany({ where: { done: false } })
+  revalidatePath('/supermercado')
+}
+
+export async function clearAllGroceryItems() {
+  await prisma.groceryItem.deleteMany({})
+  revalidatePath('/supermercado')
+}
+
+// ─── Saved Lists ──────────────────────────────────────────────────────────────
+
+export async function saveCurrentList(name: string) {
+  const activeItems = await prisma.groceryItem.findMany({
+    where: { done: false },
+  })
+  if (activeItems.length === 0) return
+
+  await prisma.savedList.create({
+    data: {
+      name,
+      items: {
+        create: activeItems.map((item) => ({
+          itemKey: item.itemKey,
+          quantity: item.quantity,
+        })),
+      },
+    },
+  })
+  revalidatePath('/historial')
+}
+
+export async function getSavedLists() {
+  return prisma.savedList.findMany({
+    include: { items: true },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function loadSavedList(listId: string, userId: string) {
+  const savedList = await prisma.savedList.findUnique({
+    where: { id: listId },
+    include: { items: true },
+  })
+  if (!savedList) return
+
+  for (const savedItem of savedList.items) {
+    const existing = await prisma.groceryItem.findFirst({
+      where: { itemKey: savedItem.itemKey, done: false },
+    })
+    if (existing) {
+      await prisma.groceryItem.update({
+        where: { id: existing.id },
+        data: { quantity: savedItem.quantity, userId },
+      })
+    } else {
+      await prisma.groceryItem.create({
+        data: { itemKey: savedItem.itemKey, quantity: savedItem.quantity, userId },
+      })
+    }
+  }
+  revalidatePath('/supermercado')
+}
+
+export async function deleteSavedList(listId: string) {
+  await prisma.savedList.delete({ where: { id: listId } })
+  revalidatePath('/historial')
+}
+
+export async function renameSavedList(listId: string, name: string) {
+  await prisma.savedList.update({ where: { id: listId }, data: { name } })
+  revalidatePath('/historial')
 }
 
 // ─── Home Tasks ───────────────────────────────────────────────────────────────
@@ -82,9 +145,7 @@ export async function getHomeTasks() {
     orderBy: { order: 'asc' },
     include: {
       completions: {
-        where: {
-          date: { in: [today, week] },
-        },
+        where: { date: { in: [today, week] } },
         include: { user: true },
         orderBy: { completedAt: 'desc' },
       },
@@ -103,7 +164,6 @@ export async function completeHomeTask(taskId: string, userId: string) {
   if (!task) return
 
   const dateKey = task.frequency === 'daily' ? getTodayString() : getWeekString()
-
   const existing = await prisma.taskCompletion.findFirst({
     where: { taskId, userId, date: dateKey },
   })
@@ -115,19 +175,22 @@ export async function completeHomeTask(taskId: string, userId: string) {
       data: { taskId, userId, date: dateKey },
     })
   }
-
   revalidatePath('/hogar')
 }
 
 export async function resetHomeTask(taskId: string) {
   const task = await prisma.homeTask.findUnique({ where: { id: taskId } })
   if (!task) return
-
   const dateKey = task.frequency === 'daily' ? getTodayString() : getWeekString()
+  await prisma.taskCompletion.deleteMany({ where: { taskId, date: dateKey } })
+  revalidatePath('/hogar')
+}
 
+export async function clearAllHomeTasks() {
+  const today = getTodayString()
+  const week = getWeekString()
   await prisma.taskCompletion.deleteMany({
-    where: { taskId, date: dateKey },
+    where: { date: { in: [today, week] } },
   })
-
   revalidatePath('/hogar')
 }

@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Home } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/supermercado', label: 'Súper', icon: ShoppingCart, emoji: '🛒' },
-  { href: '/hogar', label: 'Hogar', icon: Home, emoji: '🏠' },
+  { href: '/supermercado', label: 'Súper', emoji: '🛒' },
+  { href: '/hogar', label: 'Hogar', emoji: '🏠' },
+  { href: '/historial', label: 'Historial', emoji: '📚' },
 ]
 
 export function BottomNav() {
@@ -15,14 +15,14 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0f1019]/95 backdrop-blur-xl border-t border-slate-800 max-w-lg mx-auto">
-      <div className="flex items-center justify-around px-4 py-2 pb-safe">
+      <div className="flex items-center justify-around px-2 py-2 pb-safe">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 py-2 px-6 relative"
+              className="flex flex-col items-center gap-0.5 py-2 px-5 relative"
             >
               {active && (
                 <motion.div
