@@ -21,7 +21,7 @@ async function main() {
     const mati = await prisma.user.upsert({
       where: { id: 'user_matu' },
       update: {},
-      create: { id: 'user_matu', name: 'Matu', emoji: '🧔', color: '#60a5fa' },
+      create: { id: 'user_matu', name: 'Matu', emoji: '🧑', color: '#60a5fa' },
     })
 
     const lu = await prisma.user.upsert({
