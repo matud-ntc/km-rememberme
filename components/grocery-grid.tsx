@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { ShoppingCart, Check } from 'lucide-react'
+import { ShoppingCart, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { GROCERY_ITEMS, GROCERY_CATEGORIES, type GroceryItemDef } from '@/lib/data'
 import { QuantityModal } from './quantity-modal'
 import { useUser } from './user-provider'
@@ -26,6 +26,45 @@ export function GroceryGrid({ items }: GroceryGridProps) {
   const [selectedCategory, setSelectedCategory] = useState('verduras')
   const [modalItem, setModalItem] = useState<GroceryItemDef | null>(null)
   const [, startTransition] = useTransition()
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const isDragging = useRef(false)
+  const dragStartX = useRef(0)
+  const dragScrollLeft = useRef(0)
+
+  const scrollTabs = (dir: 'left' | 'right') => {
+    const el = tabsRef.current
+    if (!el) return
+    el.scrollBy({ left: dir === 'right' ? 160 : -160, behavior: 'smooth' })
+  }
+
+  const hasDragged = useRef(false)
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    const el = tabsRef.current
+    if (!el) return
+    isDragging.current = true
+    hasDragged.current = false
+    dragStartX.current = e.pageX - el.offsetLeft
+    dragScrollLeft.current = el.scrollLeft
+    el.style.cursor = 'grabbing'
+  }, [])
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging.current) return
+    const el = tabsRef.current
+    if (!el) return
+    const x = e.pageX - el.offsetLeft
+    const walk = x - dragStartX.current
+    if (Math.abs(walk) > 4) hasDragged.current = true
+    el.scrollLeft = dragScrollLeft.current - walk
+  }, [])
+
+  const onMouseUp = useCallback(() => {
+    isDragging.current = false
+    const el = tabsRef.current
+    if (!el) return
+    el.style.cursor = 'grab'
+  }, [])
 
   const categoryItems = GROCERY_ITEMS.filter((i) => i.category === selectedCategory)
 
@@ -62,21 +101,44 @@ export function GroceryGrid({ items }: GroceryGridProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Category tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-4 pt-4">
-        {GROCERY_CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            onClick={() => setSelectedCategory(cat.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
-              selectedCategory === cat.key
-                ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-            }`}
-          >
-            <span>{cat.emoji}</span>
-            <span>{cat.name}</span>
-          </button>
-        ))}
+      <div className="relative flex items-center px-4 pt-4 pb-2 gap-1">
+        <button
+          onClick={() => scrollTabs('left')}
+          className="shrink-0 w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
+        >
+          <ChevronLeft size={14} />
+        </button>
+
+        <div
+          ref={tabsRef}
+          className="flex gap-2 overflow-x-auto scrollbar-hide cursor-grab select-none flex-1"
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+        >
+          {GROCERY_CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              onClick={() => { if (!hasDragged.current) setSelectedCategory(cat.key) }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
+                selectedCategory === cat.key
+                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/30'
+                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              }`}
+            >
+              <span>{cat.emoji}</span>
+              <span>{cat.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => scrollTabs('right')}
+          className="shrink-0 w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
+        >
+          <ChevronRight size={14} />
+        </button>
       </div>
 
       {/* Grid */}
