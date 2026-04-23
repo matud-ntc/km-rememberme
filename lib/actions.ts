@@ -83,7 +83,7 @@ export async function saveCurrentList(name: string) {
     data: {
       name,
       items: {
-        create: activeItems.map((item) => ({
+        create: activeItems.map((item: { itemKey: string; quantity: string }) => ({
           itemKey: item.itemKey,
           quantity: item.quantity,
         })),
