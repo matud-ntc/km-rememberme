@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String           @id @default(cuid())
+  name        String
+  emoji       String
+  color       String
+  groceries   GroceryItem[]
+  completions TaskCompletion[]
+  createdAt   DateTime         @default(now())
+}
+
+model GroceryItem {
+  id        String   @id @default(cuid())
+  itemKey   String
+  quantity  String
+  done      Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HomeTask {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  name        String
+  emoji       String
+  category    String
+  frequency   String           @default("daily")
+  order       Int              @default(0)
+  completions TaskCompletion[]
+}
+
+model TaskCompletion {
+  id          String   @id @default(cuid())
+  taskId      String
+  task        HomeTask @relation(fields: [taskId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  completedAt DateTime @default(now())
+  date        String
+}
