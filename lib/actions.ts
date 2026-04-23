@@ -152,9 +152,9 @@ export async function getHomeTasks() {
     },
   })
 
-  return tasks.map((task) => {
+  return tasks.map((task: (typeof tasks)[number]) => {
     const dateKey = task.frequency === 'daily' ? today : week
-    const todayCompletions = task.completions.filter((c) => c.date === dateKey)
+    const todayCompletions = task.completions.filter((c: (typeof task.completions)[number]) => c.date === dateKey)
     return { ...task, todayCompletions }
   })
 }
